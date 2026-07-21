@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morochos Manager</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  :root{
+    --black:#0A0A0A;--gray-1:#F7F7F7;--gray-2:#EFEFEF;--gray-3:#D8D8D8;
+    --gray-4:#9B9B9B;--gray-5:#555;--red:#D0021B;--red-soft:#FFF0F2;
+    --amber:#F5A623;--amber-soft:#FFFBF0;--green:#1A7A3F;--green-soft:#F0FAF4;
+    --blue:#0066FF;--blue-soft:#F0F5FF;--purple:#6B21A8;--purple-soft:#F3E8FF;
+    --border:#E8E8E8;--shadow:0 1px 4px rgba(0,0,0,0.08);
+    --sidebar:240px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;background:#F9F9F9;color:var(--black);min-height:100vh;}
+
+  /* ── LOGIN ── */
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--black);}
+  .login-box{background:white;border-radius:20px;padding:36px 32px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,0.3);}
+  .login-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+  .login-logo img{width:44px;height:44px;border-radius:50%;object-fit:cover;}
+  .login-logo span{font-size:18px;font-weight:800;color:var(--black);}
+  .login-title{font-size:22px;font-weight:800;margin-bottom:6px;}
+  .login-sub{font-size:13px;color:var(--gray-4);margin-bottom:24px;}
+  .login-field{margin-bottom:14px;}
+  .login-field label{display:block;font-size:12px;font-weight:600;color:var(--gray-5);margin-bottom:5px;}
+  .login-field input{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:8px;
+    font-size:14px;font-family:inherit;outline:none;}
+  .login-field input:focus{border-color:var(--black);}
+  .login-btn{width:100%;padding:13px;background:var(--black);color:white;border:none;border-radius:10px;
+    font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:8px;}
+  .login-err{color:var(--red);font-size:13px;margin-top:10px;text-align:center;display:none;}
+
+  /* ── LAYOUT ── */
+  .app{display:none;}
+  .app.visible{display:flex;}
+
+  /* ── SIDEBAR ── */
+  .sidebar{
+    width:var(--sidebar);min-height:100vh;background:var(--black);
+    display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;
+    transition:transform .25s ease;
+  }
+  .sidebar.collapsed{transform:translateX(calc(-1 * var(--sidebar) + 52px));}
+  .sidebar-top{padding:18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.1);}
+  .sidebar-logo{width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+  .sidebar-brand{font-size:14px;font-weight:700;color:white;white-space:nowrap;overflow:hidden;}
+  .sidebar-brand small{display:block;font-size:10px;font-weight:400;color:rgba(255,255,255,0.4);margin-top:1px;}
+  .toggle-btn{margin-left:auto;background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.6);
+    font-size:18px;flex-shrink:0;padding:2px;}
+
+  .sidebar-user{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.1);}
+  .sidebar-user-name{font-size:12px;font-weight:600;color:white;}
+  .sidebar-user-role{font-size:11px;color:rgba(255,255,255,0.4);}
+
+  .sidebar-nav{flex:1;padding:10px 0;overflow-y:auto;}
+  .nav-section-title{font-size:9px;font-weight:700;color:rgba(255,255,255,0.3);
+    text-transform:uppercase;letter-spacing:1px;padding:10px 16px 4px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:9px 16px;
+    color:rgba(255,255,255,0.6);cursor:pointer;transition:all .15s;
+    border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;
+    width:100%;text-align:left;white-space:nowrap;overflow:hidden;
+  }
+  .nav-item:hover{background:rgba(255,255,255,0.08);color:white;}
+  .nav-item.active{background:rgba(255,255,255,0.15);color:white;}
+  .nav-item .ni{font-size:16px;flex-shrink:0;width:20px;text-align:center;}
+  .nav-item .nl{transition:opacity .2s;}
+  .sidebar.collapsed .nl{opacity:0;pointer-events:none;}
+  .sidebar.collapsed .nav-section-title{opacity:0;}
+
+  .sidebar-logout{padding:12px 16px;border-top:1px solid rgba(255,255,255,0.1);}
+  .logout-btn{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,0.4);
+    background:none;border:none;cursor:pointer;font-family:inherit;font-size:12px;padding:6px 0;}
+  .logout-btn:hover{color:white;}
+
+  /* ── MAIN ── */
+  .main{margin-left:var(--sidebar);flex:1;min-height:100vh;transition:margin .25s ease;}
+  .main.expanded{margin-left:52px;}
+
+  .topbar{height:54px;background:white;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+    position:sticky;top:0;z-index:50;}
+  .topbar-title{font-size:16px;font-weight:800;color:var(--black);}
+  .topbar-meta{font-size:12px;color:var(--gray-4);}
+
+  .content{padding:24px;max-width:1100px;}
+
+  /* ── PAGES ── */
+  .page{display:none;}
+  .page.active{display:block;}
+
+  /* ── STATS GRID ── */
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+  .kpi{background:white;border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:var(--shadow);}
+  .kpi-icon{font-size:22px;margin-bottom:8px;}
+  .kpi-label{font-size:11px;font-weight:600;color:var(--gray-4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+  .kpi-value{font-size:26px;font-weight:800;color:var(--black);line-height:1;}
+  .kpi-sub{font-size:11px;color:var(--gray-4);margin-top:3px;}
+
+  /* ── CARDS ── */
+  .card{background:white;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .card-title{font-size:14px;font-weight:700;color:var(--black);margin-bottom:14px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+
+  /* ── TABLE ── */
+  .table-wrap{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{background:var(--gray-1);font-size:11px;font-weight:700;color:var(--gray-4);
+    text-transform:uppercase;letter-spacing:.6px;padding:10px 14px;text-align:left;
+    border-bottom:1px solid var(--border);}
+  tbody td{font-size:13px;padding:11px 14px;border-bottom:1px solid var(--gray-2);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover td{background:var(--gray-1);}
+
+  /* ── BADGES ── */
+  .badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+  .badge-red{background:var(--red-soft);color:var(--red);}
+  .badge-amber{background:var(--amber-soft);color:#9A6000;}
+  .badge-green{background:var(--green-soft);color:var(--green);}
+  .badge-blue{background:var(--blue-soft);color:var(--blue);}
+  .badge-purple{background:var(--purple-soft);color:var(--purple);}
+  .badge-gray{background:var(--gray-1);color:var(--gray-5);}
+
+  /* ── FILTERS ── */
+  .filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+  .fchip{padding:5px 12px;border-radius:20px;border:1px solid var(--border);font-size:12px;
+    font-family:inherit;cursor:pointer;background:white;color:var(--gray-5);font-weight:500;}
+  .fchip.active{background:var(--black);border-color:var(--black);color:white;}
+  .filter-bar select,.filter-bar input[type=date]{
+    padding:6px 10px;border:1px solid var(--border);border-radius:8px;
+    font-size:12px;font-family:inherit;color:var(--black);background:white;outline:none;}
+
+  /* ── FORMS ── */
+  .form-group{margin-bottom:14px;}
+  .form-label{display:block;font-size:12px;font-weight:600;color:var(--gray-5);margin-bottom:5px;}
+  .form-control{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;
+    font-size:14px;font-family:inherit;color:var(--black);background:white;outline:none;-webkit-appearance:none;}
+  .form-control:focus{border-color:var(--black);}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+  /* ── BTNS ── */
+  .btn{padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;}
+  .btn-black{background:var(--black);color:white;}
+  .btn-outline{background:white;border:1px solid var(--border);color:var(--gray-5);}
+  .btn-red{background:var(--red);color:white;}
+  .btn-green{background:var(--green);color:white;}
+  .btn-sm{padding:6px 12px;font-size:12px;border-radius:6px;}
+
+  /* ── RANKING ── */
+  .rank-bar{margin-bottom:10px;}
+  .rank-label{display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:3px;}
+  .rank-label span{color:var(--gray-4);font-weight:400;}
+  .rank-track{background:var(--gray-2);border-radius:4px;height:7px;}
+  .rank-fill{height:100%;border-radius:4px;}
+
+  /* ── HIST ── */
+  .hist-item{padding:12px 0;border-bottom:1px solid var(--gray-2);display:flex;justify-content:space-between;align-items:flex-start;}
+  .hist-item:last-child{border-bottom:none;}
+  .hist-name{font-size:13px;font-weight:700;}
+  .hist-meta{font-size:11px;color:var(--gray-4);margin-top:2px;}
+  .hist-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;}
+  .hist-right{text-align:right;flex-shrink:0;margin-left:12px;}
+  .hist-qty{font-size:15px;font-weight:800;}
+  .hist-unit{font-size:11px;color:var(--gray-4);}
+
+  /* ── SCHEDULING ── */
+  .schedule-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px;}
+  .schedule-local{background:white;border:1px solid var(--border);border-radius:12px;padding:16px;}
+  .schedule-local-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+  .shift-item{display:flex;justify-content:space-between;align-items:center;
+    padding:8px 10px;background:var(--gray-1);border-radius:8px;margin-bottom:6px;}
+  .shift-name{font-size:12px;font-weight:600;}
+  .shift-time{font-size:11px;color:var(--gray-4);}
+  .shift-area{font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px;background:var(--gray-2);color:var(--gray-5);}
+
+  /* ── RECETAS ── */
+  .recipe-card{background:white;border:1px solid var(--border);border-radius:12px;padding:16px;
+    display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;
+    box-shadow:var(--shadow);cursor:pointer;transition:all .15s;}
+  .recipe-card:hover{border-color:var(--black);}
+  .recipe-name{font-size:14px;font-weight:700;}
+  .recipe-cat{font-size:11px;color:var(--gray-4);margin-top:2px;}
+  .recipe-link{font-size:12px;color:var(--blue);font-weight:600;}
+
+  /* ── FOOD COST ── */
+  .fc-product{background:white;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;}
+  .fc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .fc-name{font-size:14px;font-weight:700;}
+  .fc-cost{font-size:20px;font-weight:800;color:var(--green);}
+  .fc-ing{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--gray-2);}
+  .fc-ing:last-child{border-bottom:none;}
+
+  /* ── MODAL ── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:300;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal-box{background:white;border-radius:16px;padding:24px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;}
+  .modal-title{font-size:17px;font-weight:800;margin-bottom:16px;}
+  .modal-footer{display:flex;gap:10px;margin-top:20px;}
+  .modal-footer .btn{flex:1;}
+
+  /* ── TOAST ── */
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--black);color:white;
+    padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;
+    z-index:999;transition:opacity .3s;opacity:0;pointer-events:none;}
+  .toast.show{opacity:1;}
+
+  .empty{text-align:center;padding:40px 20px;color:var(--gray-4);}
+  .empty .icon{font-size:32px;margin-bottom:8px;}
+  .empty p{font-size:13px;}
+
+  @media(max-width:768px){
+    .sidebar{width:100%;transform:translateX(-100%);}
+    .sidebar.mobile-open{transform:translateX(0);}
+    .sidebar.collapsed{transform:translateX(-100%);}
+    .main{margin-left:0!important;}
+    .kpi-grid{grid-template-columns:1fr 1fr;}
+    .two-col,.three-col,.schedule-grid{grid-template-columns:1fr;}
+    .content{padding:14px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="logo_morochos.png" alt="Morochos">
+      <span>Morochos</span>
+    </div>
+    <div class="login-title">Manager</div>
+    <div class="login-sub">Acceso exclusivo para administradores</div>
+    <div class="login-field">
+      <label>Usuario</label>
+      <input type="text" id="l-user" placeholder="tu usuario" autocomplete="username"/>
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-err" id="l-err">Usuario o contraseña incorrectos</div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div class="app" id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <img src="logo_morochos.png" class="sidebar-logo" alt="Morochos">
+      <div class="sidebar-brand">
+        Morochos<small>Manager</small>
+      </div>
+      <button class="toggle-btn" onclick="toggleSidebar()" title="Colapsar">☰</button>
+    </div>
+    <div class="sidebar-user">
+      <div class="sidebar-user-name" id="sb-username"></div>
+      <div class="sidebar-user-role">Administrador</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title nl">Operaciones</div>
+      <button class="nav-item active" id="nav-dashboard" onclick="goTo('dashboard')">
+        <span class="ni">📊</span><span class="nl">Dashboard</span>
+      </button>
+      <button class="nav-item" id="nav-bajas" onclick="goTo('bajas')">
+        <span class="ni">📉</span><span class="nl">Bajas</span>
+      </button>
+      <button class="nav-item" id="nav-produccion" onclick="goTo('produccion')">
+        <span class="ni">🍳</span><span class="nl">Producción</span>
+      </button>
+      <button class="nav-item" id="nav-inventario" onclick="goTo('inventario')">
+        <span class="ni">📦</span><span class="nl">Inventario</span>
+      </button>
+      <div class="nav-section-title nl">Gestión</div>
+      <button class="nav-item" id="nav-scheduling" onclick="goTo('scheduling')">
+        <span class="ni">👥</span><span class="nl">Scheduling</span>
+      </button>
+      <button class="nav-item" id="nav-foodcost" onclick="goTo('foodcost')">
+        <span class="ni">💰</span><span class="nl">Food Cost</span>
+      </button>
+      <button class="nav-item" id="nav-recetas" onclick="goTo('recetas')">
+        <span class="ni">📋</span><span class="nl">Recetas</span>
+      </button>
+    </nav>
+    <div class="sidebar-logout">
+      <button class="logout-btn" onclick="doLogout()">
+        <span>🚪</span><span class="nl">Cerrar sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">Dashboard</div>
+        <div class="topbar-meta" id="topbar-meta"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;" id="topbar-actions"></div>
+    </div>
+
+    <div class="content">
+
+      <!-- ═══ DASHBOARD ═══ -->
+      <div class="page active" id="page-dashboard">
+        <div class="kpi-grid" id="dash-kpis"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-title">⚠️ Productos críticos (bodega)</div>
+            <div id="dash-criticos"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">📉 Bajas de hoy por local</div>
+            <div id="dash-bajas-hoy"></div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-title">🍳 Producción de hoy</div>
+            <div id="dash-prod-hoy"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">📦 Últimos despachos</div>
+            <div id="dash-despachos"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ BAJAS ═══ -->
+      <div class="page" id="page-bajas">
+        <div class="filter-bar">
+          <select id="fb-local" onchange="renderBajas()">
+            <option value="todos">Todos los locales</option>
+            <option>Orange</option><option>West Orange</option><option>Facility</option>
+          </select>
+          <select id="fb-area" onchange="renderBajas()">
+            <option value="todos">Todas las áreas</option>
+            <option>Cocina</option><option>Jugos</option><option>Cafetería</option><option>Bakery</option>
+          </select>
+          <select id="fb-periodo" onchange="renderBajas()">
+            <option value="todo">Todo</option><option value="hoy">Hoy</option>
+            <option value="semana">Esta semana</option><option value="mes">Este mes</option>
+            <option value="rango">Rango</option>
+          </select>
+          <div id="fb-rango" style="display:none;gap:6px;">
+            <input type="date" id="fb-desde" onchange="renderBajas()">
+            <span style="color:var(--gray-4);">—</span>
+            <input type="date" id="fb-hasta" onchange="renderBajas()">
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="exportarCSV('bajas')">⬇ CSV</button>
+        </div>
+        <div class="kpi-grid" id="b-kpis"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-title">Más frecuentes</div>
+            <div id="b-ranking"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Por motivo</div>
+            <div id="b-motivos"></div>
+          </div>
+        </div>
+        <div class="card" id="b-alertas-card" style="display:none">
+          <div class="card-title" style="color:var(--red);">⚠️ Requiere atención — Receta mal preparada</div>
+          <div id="b-alertas"></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div class="card-title" style="margin:0;">Historial</div>
+            <span id="b-count" style="font-size:12px;color:var(--gray-4);"></span>
+          </div>
+          <div id="b-list"></div>
+        </div>
+      </div>
+
+      <!-- ═══ PRODUCCIÓN ═══ -->
+      <div class="page" id="page-produccion">
+        <div class="filter-bar">
+          <select id="fp-local" onchange="renderProduccion()">
+            <option value="todos">Todos los locales</option>
+            <option>Orange</option><option>West Orange</option><option>Facility</option>
+          </select>
+          <select id="fp-periodo" onchange="renderProduccion()">
+            <option value="todo">Todo</option><option value="hoy">Hoy</option>
+            <option value="semana">Esta semana</option><option value="mes">Este mes</option>
+            <option value="rango">Rango</option>
+          </select>
+          <div id="fp-rango" style="display:none;gap:6px;">
+            <input type="date" id="fp-desde" onchange="renderProduccion()">
+            <span style="color:var(--gray-4);">—</span>
+            <input type="date" id="fp-hasta" onchange="renderProduccion()">
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="exportarCSV('prod')">⬇ CSV</button>
+        </div>
+        <div class="kpi-grid" id="p-kpis"></div>
+        <div class="card">
+          <div class="card-title">Más producido</div>
+          <div id="p-ranking"></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div class="card-title" style="margin:0;">Historial</div>
+            <span id="p-count" style="font-size:12px;color:var(--gray-4);"></span>
+          </div>
+          <div id="p-list"></div>
+        </div>
+      </div>
+
+      <!-- ═══ INVENTARIO ═══ -->
+      <div class="page" id="page-inventario">
+        <div class="filter-bar">
+          <select id="fi-cat" onchange="renderInventario()">
+            <option value="todos">Todas las categorías</option>
+            <option>Cocina</option><option>Cafeteria</option><option>Jugos</option>
+            <option>Reposteria</option><option>Panaderia</option><option>Desechables</option>
+          </select>
+          <select id="fi-estado" onchange="renderInventario()">
+            <option value="todos">Todos</option>
+            <option value="agotado">Agotado</option>
+            <option value="bajo">Bajo mínimo</option>
+            <option value="ok">En stock</option>
+          </select>
+        </div>
+        <div class="kpi-grid" id="inv-kpis"></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Producto</th><th>Categoría</th><th>Stock</th><th>Mínimo</th><th>Estado</th>
+            </tr></thead>
+            <tbody id="inv-body"></tbody>
+          </table>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-title">Últimas entradas</div>
+            <div id="inv-entradas"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Últimos despachos</div>
+            <div id="inv-despachos"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SCHEDULING ═══ -->
+      <div class="page" id="page-scheduling">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <p style="font-size:13px;color:var(--gray-4);">Gestiona turnos y horarios por local.</p>
+          <button class="btn btn-black btn-sm" onclick="abrirModalTurno()">+ Agregar turno</button>
+        </div>
+        <div class="schedule-grid" id="schedule-grid"></div>
+        <div class="card">
+          <div class="card-title">📅 Todos los turnos</div>
+          <div class="table-wrap" style="margin:0;">
+            <table>
+              <thead><tr><th>Empleado</th><th>Local</th><th>Área</th><th>Turno</th><th>Horario</th><th></th></tr></thead>
+              <tbody id="schedule-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ FOOD COST ═══ -->
+      <div class="page" id="page-foodcost">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <p style="font-size:13px;color:var(--gray-4);">Calcula el costo por receta con ingredientes reales.</p>
+          <button class="btn btn-black btn-sm" onclick="abrirModalFC()">+ Nueva receta</button>
+        </div>
+        <div id="fc-list"></div>
+      </div>
+
+      <!-- ═══ RECETAS ═══ -->
+      <div class="page" id="page-recetas">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <p style="font-size:13px;color:var(--gray-4);">Links a recetas en Notion por categoría.</p>
+          <button class="btn btn-black btn-sm" onclick="abrirModalReceta()">+ Agregar link</button>
+        </div>
+        <div class="filter-bar" id="f-receta-cat">
+          <button class="fchip active" data-cat="todos" onclick="setFReceta(this)">Todas</button>
+          <button class="fchip" data-cat="Cocina" onclick="setFReceta(this)">Cocina</button>
+          <button class="fchip" data-cat="Bebidas" onclick="setFReceta(this)">Bebidas</button>
+          <button class="fchip" data-cat="Bakery" onclick="setFReceta(this)">Bakery</button>
+          <button class="fchip" data-cat="Cafetería" onclick="setFReceta(this)">Cafetería</button>
+        </div>
+        <div id="recetas-list"></div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /app -->
+
+<!-- MODAL TURNO -->
+<div class="modal-overlay" id="modal-turno">
+  <div class="modal-box">
+    <div class="modal-title">Agregar turno</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Empleado</label>
+        <input type="text" id="t-nombre" class="form-control" placeholder="Nombre completo"/></div>
+      <div class="form-group"><label class="form-label">Local</label>
+        <select id="t-local" class="form-control">
+          <option>Orange</option><option>West Orange</option><option>Facility</option>
+        </select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Área</label>
+        <select id="t-area" class="form-control">
+          <option>Cocina</option><option>Jugos</option><option>Cafetería</option><option>Bakery</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">Turno</label>
+        <select id="t-turno" class="form-control">
+          <option>Mañana</option><option>Tarde</option><option>Noche</option>
+        </select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Hora inicio</label>
+        <input type="time" id="t-inicio" class="form-control"/></div>
+      <div class="form-group"><label class="form-label">Hora fin</label>
+        <input type="time" id="t-fin" class="form-control"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Días</label>
+      <input type="text" id="t-dias" class="form-control" placeholder="Ej: Lun-Vie, o Sab-Dom"/></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="cerrarModal('modal-turno')">Cancelar</button>
+      <button class="btn btn-black" onclick="guardarTurno()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FOOD COST -->
+<div class="modal-overlay" id="modal-fc">
+  <div class="modal-box">
+    <div class="modal-title">Nueva receta — Food Cost</div>
+    <div class="form-group"><label class="form-label">Nombre del producto</label>
+      <input type="text" id="fc-nombre" class="form-control" placeholder="Ej: Empanada de pollo"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Precio de venta ($)</label>
+        <input type="number" id="fc-precio" class="form-control" placeholder="0.00" step="0.01"/></div>
+      <div class="form-group"><label class="form-label">Categoría</label>
+        <select id="fc-cat" class="form-control">
+          <option>Cocina</option><option>Bebidas</option><option>Bakery</option><option>Cafetería</option>
+        </select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Ingredientes</label>
+      <div id="fc-ings"></div>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px;width:100%;" onclick="addIng()">+ Ingrediente</button>
+    </div>
+    <div id="fc-resumen" style="background:var(--green-soft);border-radius:8px;padding:12px;margin-top:8px;display:none;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;">
+        <span>Costo total:</span><span id="fc-total-cost" style="color:var(--green);"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-top:4px;">
+        <span>Margen:</span><span id="fc-margen" style="color:var(--green);"></span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="cerrarModal('modal-fc')">Cancelar</button>
+      <button class="btn btn-black" onclick="guardarFC()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RECETA -->
+<div class="modal-overlay" id="modal-receta">
+  <div class="modal-box">
+    <div class="modal-title">Agregar receta</div>
+    <div class="form-group"><label class="form-label">Nombre de la receta</label>
+      <input type="text" id="r-nombre" class="form-control" placeholder="Ej: Empanada de pollo"/></div>
+    <div class="form-group"><label class="form-label">Categoría</label>
+      <select id="r-cat" class="form-control">
+        <option>Cocina</option><option>Bebidas</option><option>Bakery</option><option>Cafetería</option>
+      </select></div>
+    <div class="form-group"><label class="form-label">Link de Notion</label>
+      <input type="url" id="r-link" class="form-control" placeholder="https://notion.so/..."/></div>
+    <div class="form-group"><label class="form-label">Notas (opcional)</label>
+      <input type="text" id="r-notas" class="form-control" placeholder="Observaciones…"/></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="cerrarModal('modal-receta')">Cancelar</button>
+      <button class="btn btn-black" onclick="guardarReceta()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+<!-- PROXY: resuelve type=module + onclick -->
+<script>
+function doLogin(){window.doLogin&&window.doLogin();}
+function doLogout(){window.doLogout&&window.doLogout();}
+function toggleSidebar(){window.toggleSidebar&&window.toggleSidebar();}
+function goTo(id){window.goTo&&window.goTo(id);}
+function renderBajas(){window.renderBajas&&window.renderBajas();}
+function renderProduccion(){window.renderProduccion&&window.renderProduccion();}
+function renderInventario(){window.renderInventario&&window.renderInventario();}
+function renderScheduling(){window.renderScheduling&&window.renderScheduling();}
+function renderFoodCost(){window.renderFoodCost&&window.renderFoodCost();}
+function renderRecetas(){window.renderRecetas&&window.renderRecetas();}
+function abrirModalTurno(){window.abrirModalTurno&&window.abrirModalTurno();}
+function guardarTurno(){window.guardarTurno&&window.guardarTurno();}
+function eliminarTurno(id){window.eliminarTurno&&window.eliminarTurno(id);}
+function abrirModalFC(){window.abrirModalFC&&window.abrirModalFC();}
+function addIng(){window.addIng&&window.addIng();}
+function calcFC(){window.calcFC&&window.calcFC();}
+function guardarFC(){window.guardarFC&&window.guardarFC();}
+function abrirModalReceta(){window.abrirModalReceta&&window.abrirModalReceta();}
+function guardarReceta(){window.guardarReceta&&window.guardarReceta();}
+function cerrarModal(id){window.cerrarModal&&window.cerrarModal(id);}
+function exportarCSV(t){window.exportarCSV&&window.exportarCSV(t);}
+function setFReceta(el){window.setFReceta&&window.setFReceta(el);}
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy,
+         serverTimestamp, deleteDoc, doc }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyDvL3-jot3HM1dVGZln85Dlnbf9QKeX5TE",
+  authDomain:"morochos-orange-bajas.firebaseapp.com",
+  projectId:"morochos-orange-bajas",
+  storageBucket:"morochos-orange-bajas.firebasestorage.app",
+  messagingSenderId:"246290449853",
+  appId:"1:246290449853:web:bd48951de1187689c83ed4"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+
+// ── USUARIOS ──
+const USERS = {
+  'oscarmorocho':   { pass:'Chatpass1.1', nombre:'Oscar',   rol:'Admin' },
+  'mayravelasquez': { pass:'Chatpass1.1', nombre:'Mayra',   rol:'Admin' },
+  'melitonmorocho': { pass:'Chatpass1.1', nombre:'Meliton', rol:'Admin' },
+};
+
+let currentUser = null;
+let bajas=[], producciones=[], invProductos=[], invEntradas=[], invDespachos=[], turnos=[], foodcosts=[], recetas=[];
+let sidebarCollapsed = false;
+let fcIngCount = 0;
+let filtroCatReceta = 'todos';
+
+// ── LOGIN ──
+function doLogin(){
+  const u=document.getElementById('l-user').value.trim().toLowerCase();
+  const p=document.getElementById('l-pass').value;
+  const user=USERS[u];
+  if(user && user.pass===p){
+    currentUser={username:u,...user};
+    document.getElementById('login-wrap').style.display='none';
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('sb-username').textContent=user.nombre;
+    iniciarApp();
+  } else {
+    document.getElementById('l-err').style.display='block';
+  }
+}
+
+function doLogout(){
+  currentUser=null;
+  document.getElementById('login-wrap').style.display='flex';
+  document.getElementById('app').classList.remove('visible');
+}
+
+function iniciarApp(){
+  const ahora=new Date();
+  document.getElementById('topbar-meta').textContent=
+    ahora.toLocaleDateString('es-EC',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  escucharFirestore();
+}
+
+// ── SIDEBAR ──
+function toggleSidebar(){
+  sidebarCollapsed=!sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed',sidebarCollapsed);
+  document.getElementById('main').classList.toggle('expanded',sidebarCollapsed);
+}
+
+function goTo(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+  const titles={dashboard:'Dashboard',bajas:'Bajas',produccion:'Producción',
+    inventario:'Inventario Bodega',scheduling:'Scheduling',foodcost:'Food Cost',recetas:'Recetas'};
+  document.getElementById('topbar-title').textContent=titles[id]||id;
+  if(id==='dashboard') renderDashboard();
+  if(id==='bajas') renderBajas();
+  if(id==='produccion') renderProduccion();
+  if(id==='inventario') renderInventario();
+  if(id==='scheduling') renderScheduling();
+  if(id==='foodcost') renderFoodCost();
+  if(id==='recetas') renderRecetas();
+}
+
+// ── FIRESTORE ──
+function escucharFirestore(){
+  onSnapshot(query(collection(db,'bajas'),orderBy('fecha','desc')),s=>{
+    bajas=s.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+    if(document.getElementById('page-bajas').classList.contains('active')) renderBajas();
+  });
+  onSnapshot(query(collection(db,'producciones'),orderBy('fecha','desc')),s=>{
+    producciones=s.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+    if(document.getElementById('page-produccion').classList.contains('active')) renderProduccion();
+  });
+  onSnapshot(query(collection(db,'inv_productos'),orderBy('nombre')),s=>{
+    invProductos=s.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('page-inventario').classList.contains('active')) renderInventario();
+    if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+  });
+  onSnapshot(query(collection(db,'inv_entradas'),orderBy('fecha','desc')),s=>{
+    invEntradas=s.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('page-inventario').classList.contains('active')) renderInventario();
+  });
+  onSnapshot(query(collection(db,'inv_despachos'),orderBy('fecha','desc')),s=>{
+    invDespachos=s.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('page-inventario').classList.contains('active')) renderInventario();
+    if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+  });
+  onSnapshot(query(collection(db,'mg_turnos'),orderBy('local')),s=>{
+    turnos=s.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('page-scheduling').classList.contains('active')) renderScheduling();
+  });
+  onSnapshot(query(collection(db,'mg_foodcost'),orderBy('nombre')),s=>{
+    foodcosts=s.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('page-foodcost').classList.contains('active')) renderFoodCost();
+  });
+  onSnapshot(query(collection(db,'mg_recetas'),orderBy('nombre')),s=>{
+    recetas=s.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('page-recetas').classList.contains('active')) renderRecetas();
+  });
+}
+
+// ── HELPERS ──
+function getD(r){return r.fecha?.toDate?r.fecha.toDate():new Date(r.fecha||0);}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+function cerrarModal(id){document.getElementById(id).classList.remove('open');}
+
+function filtrarFecha(data,pid,did,hid){
+  const p=document.getElementById(pid)?.value||'todo';
+  const ahora=new Date();
+  if(p==='hoy')return data.filter(r=>getD(r).toDateString()===ahora.toDateString());
+  if(p==='semana'){const l=new Date(ahora);l.setDate(ahora.getDate()-ahora.getDay()+1);l.setHours(0,0,0,0);return data.filter(r=>getD(r)>=l);}
+  if(p==='mes')return data.filter(r=>{const d=getD(r);return d.getMonth()===ahora.getMonth()&&d.getFullYear()===ahora.getFullYear();});
+  if(p==='rango'){
+    const desde=document.getElementById(did)?.value?new Date(document.getElementById(did).value+'T00:00:00'):null;
+    const hasta=document.getElementById(hid)?.value?new Date(document.getElementById(hid).value+'T23:59:59'):null;
+    return data.filter(r=>{const d=getD(r);return(!desde||d>=desde)&&(!hasta||d<=hasta);});
+  }
+  return data;
+}
+
+function ranking(data,key,color,n=6){
+  const map={};data.forEach(r=>{map[r[key]]=(map[r[key]]||0)+(r.cant||1);});
+  const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,n);
+  const mx=sorted[0]?.[1]||1;
+  return sorted.length?sorted.map(([k,v])=>`<div class="rank-bar">
+    <div class="rank-label">${k}<span>${v}</span></div>
+    <div class="rank-track"><div class="rank-fill" style="width:${(v/mx*100).toFixed(0)}%;background:${color};"></div></div>
+  </div>`).join(''):'<div class="empty"><p>Sin datos.</p></div>';
+}
+
+function histItem(r,qtyColor,tipo){
+  const f=getD(r).toLocaleDateString('es-EC',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  const badge=tipo==='baja'
+    ?`<span class="badge badge-gray">${r.motivo||''}</span>`
+    :`<span class="badge badge-amber">${r.turno||''}</span>`;
+  return `<div class="hist-item">
+    <div><div class="hist-name">${r.prod||r.prodNombre||''}</div>
+    <div class="hist-meta">${f} · ${r.enc||r.encargado||''}</div>
+    <div class="hist-tags">
+      <span class="badge badge-gray">${r.local||''}</span>
+      <span class="badge badge-blue">${r.area||''}</span>
+      ${badge}
+    </div></div>
+    <div class="hist-right"><div class="hist-qty" style="color:${qtyColor};">${r.cant||0}</div>
+    <div class="hist-unit">${r.unid||''}</div></div>
+  </div>`;
+}
+
+// ── DASHBOARD ──
+function renderDashboard(){
+  const hoy=new Date().toDateString();
+  const bajasHoy=bajas.filter(b=>getD(b).toDateString()===hoy);
+  const prodHoy=producciones.filter(p=>getD(p).toDateString()===hoy);
+  const criticos=invProductos.filter(p=>(p.stock||0)<=p.minimo&&p.minimo>0);
+  const mesActual=new Date();
+  const gastoMes=invEntradas.filter(e=>{const d=getD(e);return d.getMonth()===mesActual.getMonth()&&d.getFullYear()===mesActual.getFullYear();}).reduce((s,e)=>s+(e.costo||0),0);
+
+  document.getElementById('dash-kpis').innerHTML=`
+    <div class="kpi"><div class="kpi-icon">📉</div><div class="kpi-label">Bajas hoy</div><div class="kpi-value">${bajasHoy.length}</div><div class="kpi-sub">registros</div></div>
+    <div class="kpi"><div class="kpi-icon">🍳</div><div class="kpi-label">Producción hoy</div><div class="kpi-value">${prodHoy.reduce((s,p)=>s+(p.cant||0),0)}</div><div class="kpi-sub">unidades</div></div>
+    <div class="kpi"><div class="kpi-icon">🔴</div><div class="kpi-label">Stock crítico</div><div class="kpi-value" style="color:var(--red);">${criticos.length}</div><div class="kpi-sub">productos</div></div>
+    <div class="kpi"><div class="kpi-icon">💵</div><div class="kpi-label">Gasto mes</div><div class="kpi-value" style="font-size:20px;">$${gastoMes.toFixed(0)}</div><div class="kpi-sub">en compras</div></div>`;
+
+  // Críticos
+  document.getElementById('dash-criticos').innerHTML=criticos.length
+    ?criticos.slice(0,6).map(p=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--gray-2);font-size:13px;">
+        <span>${p.nombre}</span>
+        <span class="badge ${(p.stock||0)<=0?'badge-red':'badge-amber'}">${(p.stock||0)<=0?'Agotado':'Stock: '+p.stock}</span>
+      </div>`).join('')
+    :'<div class="empty"><p>✅ Todo en orden.</p></div>';
+
+  // Bajas hoy por local
+  const porLocal={};bajasHoy.forEach(b=>{porLocal[b.local]=(porLocal[b.local]||0)+1;});
+  document.getElementById('dash-bajas-hoy').innerHTML=Object.keys(porLocal).length
+    ?Object.entries(porLocal).map(([l,n])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--gray-2);font-size:13px;"><span>${l}</span><b>${n} bajas</b></div>`).join('')
+    :'<div class="empty"><p>Sin bajas hoy.</p></div>';
+
+  // Producción hoy
+  document.getElementById('dash-prod-hoy').innerHTML=prodHoy.length
+    ?prodHoy.slice(0,5).map(p=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--gray-2);font-size:13px;"><span>${p.prod}</span><b style="color:var(--green);">${p.cant} ${p.unid}</b></div>`).join('')
+    :'<div class="empty"><p>Sin producción registrada hoy.</p></div>';
+
+  // Últimos despachos
+  document.getElementById('dash-despachos').innerHTML=invDespachos.slice(0,5).length
+    ?invDespachos.slice(0,5).map(d=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--gray-2);font-size:13px;"><span>${d.prodNombre||''}</span><span class="badge badge-blue">${d.destino||''}</span></div>`).join('')
+    :'<div class="empty"><p>Sin despachos recientes.</p></div>';
+}
+
+// ── BAJAS ──
+function renderBajas(){
+  const p=document.getElementById('fb-periodo').value;
+  document.getElementById('fb-rango').style.display=p==='rango'?'flex':'none';
+  let data=[...bajas];
+  const loc=document.getElementById('fb-local').value;
+  const area=document.getElementById('fb-area').value;
+  if(loc!=='todos')data=data.filter(b=>b.local===loc);
+  if(area!=='todos')data=data.filter(b=>b.area===area);
+  data=filtrarFecha(data,'fb-periodo','fb-desde','fb-hasta');
+
+  const hoy=new Date().toDateString();
+  const hoyN=data.filter(b=>getD(b).toDateString()===hoy).length;
+  const byM={};data.forEach(b=>{byM[b.motivo]=(byM[b.motivo]||0)+1;});
+  const topM=Object.entries(byM).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('b-kpis').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Total bajas</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">en el período</div></div>
+    <div class="kpi"><div class="kpi-label">Hoy</div><div class="kpi-value">${hoyN}</div><div class="kpi-sub">registros</div></div>
+    <div class="kpi"><div class="kpi-label">Causa frecuente</div><div class="kpi-value" style="font-size:14px;line-height:1.3;">${topM?topM[0]:'—'}</div><div class="kpi-sub">${topM?topM[1]+' veces':''}</div></div>
+    <div class="kpi"><div class="kpi-label">Productos únicos</div><div class="kpi-value">${new Set(data.map(b=>b.prod)).size}</div><div class="kpi-sub">con bajas</div></div>`;
+
+  document.getElementById('b-ranking').innerHTML=ranking(data,'prod','var(--red)');
+  document.getElementById('b-motivos').innerHTML=ranking(data,'motivo','var(--amber)');
+
+  const porProd={};
+  data.filter(b=>b.motivo==='Receta mal preparada').forEach(b=>{porProd[b.prod]=(porProd[b.prod]||0)+1;});
+  const alertas=Object.entries(porProd).filter(([,v])=>v>=2);
+  document.getElementById('b-alertas-card').style.display=alertas.length?'block':'none';
+  document.getElementById('b-alertas').innerHTML=alertas.map(([k,v])=>
+    `<div style="padding:8px 10px;background:var(--red-soft);border-radius:8px;margin-bottom:6px;font-size:13px;color:var(--red);font-weight:600;">"${k}" — ${v} bajas por receta</div>`).join('');
+
+  document.getElementById('b-count').textContent=data.length+' registros';
+  document.getElementById('b-list').innerHTML=data.length
+    ?data.map(b=>histItem(b,'var(--red)','baja')).join('')
+    :'<div class="empty"><div class="icon">📋</div><p>Sin registros.</p></div>';
+}
+
+// ── PRODUCCIÓN ──
+function renderProduccion(){
+  const p=document.getElementById('fp-periodo').value;
+  document.getElementById('fp-rango').style.display=p==='rango'?'flex':'none';
+  let data=[...producciones];
+  const loc=document.getElementById('fp-local').value;
+  if(loc!=='todos')data=data.filter(p=>p.local===loc);
+  data=filtrarFecha(data,'fp-periodo','fp-desde','fp-hasta');
+
+  const hoy=new Date().toDateString();
+  const hoyN=data.filter(p=>getD(p).toDateString()===hoy).length;
+  const total=data.reduce((s,p)=>s+(p.cant||0),0);
+
+  document.getElementById('p-kpis').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Registros</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">en el período</div></div>
+    <div class="kpi"><div class="kpi-label">Unidades totales</div><div class="kpi-value">${total}</div><div class="kpi-sub">producidas</div></div>
+    <div class="kpi"><div class="kpi-label">Hoy</div><div class="kpi-value">${hoyN}</div><div class="kpi-sub">registros</div></div>
+    <div class="kpi"><div class="kpi-label">Productos únicos</div><div class="kpi-value">${new Set(data.map(p=>p.prod)).size}</div><div class="kpi-sub">elaborados</div></div>`;
+
+  document.getElementById('p-ranking').innerHTML=ranking(data,'prod','var(--green)');
+  document.getElementById('p-count').textContent=data.length+' registros';
+  document.getElementById('p-list').innerHTML=data.length
+    ?data.map(p=>histItem(p,'var(--green)','prod')).join('')
+    :'<div class="empty"><div class="icon">🍳</div><p>Sin registros.</p></div>';
+}
+
+// ── INVENTARIO ──
+function renderInventario(){
+  const cat=document.getElementById('fi-cat').value;
+  const est=document.getElementById('fi-estado').value;
+  let data=[...invProductos];
+  if(cat!=='todos')data=data.filter(p=>p.cat===cat);
+  const getEst=p=>{if((p.stock||0)<=0)return'agotado';if(p.minimo>0&&(p.stock||0)<=p.minimo)return'bajo';return'ok';};
+  if(est!=='todos')data=data.filter(p=>getEst(p)===est);
+
+  const agotados=invProductos.filter(p=>(p.stock||0)<=0).length;
+  const bajos=invProductos.filter(p=>p.minimo>0&&(p.stock||0)>0&&(p.stock||0)<=p.minimo).length;
+  const gastoTotal=invEntradas.reduce((s,e)=>s+(e.costo||0),0);
+
+  document.getElementById('inv-kpis').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Total productos</div><div class="kpi-value">${invProductos.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Agotados</div><div class="kpi-value" style="color:var(--red);">${agotados}</div></div>
+    <div class="kpi"><div class="kpi-label">Bajo mínimo</div><div class="kpi-value" style="color:var(--amber);">${bajos}</div></div>
+    <div class="kpi"><div class="kpi-label">Gasto total</div><div class="kpi-value" style="font-size:18px;">$${gastoTotal.toFixed(0)}</div></div>`;
+
+  document.getElementById('inv-body').innerHTML=data.length
+    ?data.map(p=>{
+      const e=getEst(p);
+      const badge=e==='agotado'?'badge-red':e==='bajo'?'badge-amber':'badge-green';
+      const label=e==='agotado'?'Agotado':e==='bajo'?'Bajo mínimo':'En stock';
+      return `<tr><td><b>${p.nombre}</b></td><td><span class="badge badge-gray">${p.cat}</span></td>
+        <td>${p.stock||0} ${p.unidad||''}</td><td>${p.minimo||0}</td>
+        <td><span class="badge ${badge}">${label}</span></td></tr>`;}).join('')
+    :'<tr><td colspan="5"><div class="empty"><p>Sin productos.</p></div></td></tr>';
+
+  document.getElementById('inv-entradas').innerHTML=invEntradas.slice(0,6).length
+    ?invEntradas.slice(0,6).map(e=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--gray-2);font-size:13px;">
+        <div><b>${e.prodNombre||''}</b><div style="font-size:11px;color:var(--gray-4);">${getD(e).toLocaleDateString('es-EC',{day:'2-digit',month:'short'})}</div></div>
+        <span style="color:var(--green);font-weight:700;">+${e.cant} · $${(e.costo||0).toFixed(0)}</span></div>`).join('')
+    :'<div class="empty"><p>Sin entradas.</p></div>';
+
+  document.getElementById('inv-despachos').innerHTML=invDespachos.slice(0,6).length
+    ?invDespachos.slice(0,6).map(d=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--gray-2);font-size:13px;">
+        <div><b>${d.prodNombre||''}</b><div style="font-size:11px;color:var(--gray-4);">${d.destino||''} · ${getD(d).toLocaleDateString('es-EC',{day:'2-digit',month:'short'})}</div></div>
+        <span style="color:var(--red);font-weight:700;">-${d.cant}</span></div>`).join('')
+    :'<div class="empty"><p>Sin despachos.</p></div>';
+}
+
+// ── SCHEDULING ──
+function renderScheduling(){
+  const locales=['Orange','West Orange','Facility'];
+  document.getElementById('schedule-grid').innerHTML=locales.map(local=>{
+    const lt=turnos.filter(t=>t.local===local);
+    return `<div class="schedule-local">
+      <div class="schedule-local-title">🏪 ${local} <span class="badge badge-gray">${lt.length}</span></div>
+      ${lt.length?lt.map(t=>`<div class="shift-item">
+        <div><div class="shift-name">${t.nombre}</div>
+        <div class="shift-time">${t.inicio||''} - ${t.fin||''} · ${t.dias||''}</div></div>
+        <span class="shift-area">${t.area}</span>
+      </div>`).join(''):'<p style="font-size:12px;color:var(--gray-4);">Sin turnos registrados.</p>'}
+    </div>`;}).join('');
+
+  document.getElementById('schedule-body').innerHTML=turnos.length
+    ?turnos.map(t=>`<tr>
+        <td><b>${t.nombre}</b></td><td>${t.local}</td><td>${t.area}</td>
+        <td><span class="badge badge-amber">${t.turno}</span></td>
+        <td>${t.inicio||''} - ${t.fin||''}<br><span style="font-size:11px;color:var(--gray-4);">${t.dias||''}</span></td>
+        <td><button class="btn btn-outline btn-sm" style="color:var(--red);" onclick="eliminarTurno('${t.id}')">✕</button></td>
+      </tr>`).join('')
+    :'<tr><td colspan="6"><div class="empty"><p>Sin turnos.</p></div></td></tr>';
+}
+
+function abrirModalTurno(){document.getElementById('modal-turno').classList.add('open');}
+async function guardarTurno(){
+  const nombre=document.getElementById('t-nombre').value.trim();
+  if(!nombre){showToast('⚠️ Escribe el nombre');return;}
+  await addDoc(collection(db,'mg_turnos'),{
+    nombre,local:document.getElementById('t-local').value,
+    area:document.getElementById('t-area').value,turno:document.getElementById('t-turno').value,
+    inicio:document.getElementById('t-inicio').value,fin:document.getElementById('t-fin').value,
+    dias:document.getElementById('t-dias').value,creado:serverTimestamp()
+  });
+  cerrarModal('modal-turno');
+  ['t-nombre','t-inicio','t-fin','t-dias'].forEach(id=>document.getElementById(id).value='');
+  showToast('✅ Turno guardado');
+}
+async function eliminarTurno(id){
+  if(!confirm('¿Eliminar este turno?'))return;
+  await deleteDoc(doc(db,'mg_turnos',id));
+  showToast('Turno eliminado');
+}
+
+// ── FOOD COST ──
+function renderFoodCost(){
+  document.getElementById('fc-list').innerHTML=foodcosts.length
+    ?foodcosts.map(fc=>{
+      const costo=fc.ingredientes?.reduce((s,i)=>s+(i.costo||0),0)||0;
+      const margen=fc.precio?((fc.precio-costo)/fc.precio*100).toFixed(1):0;
+      return `<div class="fc-product">
+        <div class="fc-header">
+          <div><div class="fc-name">${fc.nombre}</div>
+          <span class="badge badge-gray">${fc.cat}</span></div>
+          <div style="text-align:right;">
+            <div class="fc-cost">$${costo.toFixed(2)}</div>
+            <div style="font-size:11px;color:var(--gray-4);">Venta: $${fc.precio||0} · Margen: ${margen}%</div>
+          </div>
+        </div>
+        ${fc.ingredientes?.map(i=>`<div class="fc-ing"><span>${i.nombre}</span>
+          <span>$${(i.costo||0).toFixed(2)}</span></div>`).join('')||''}
+      </div>`;}).join('')
+    :'<div class="empty"><div class="icon">💰</div><p>Agrega tu primera receta con ingredientes.</p></div>';
+}
+
+function abrirModalFC(){
+  fcIngCount=0;
+  document.getElementById('fc-ings').innerHTML='';
+  document.getElementById('fc-resumen').style.display='none';
+  ['fc-nombre','fc-precio'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-fc').classList.add('open');
+  addIng();
+}
+
+function addIng(){
+  fcIngCount++;
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;gap:8px;margin-bottom:6px;';
+  div.innerHTML=`<input type="text" class="form-control ing-nombre" placeholder="Ingrediente" style="flex:2;">
+    <input type="number" class="form-control ing-costo" placeholder="$" style="flex:1;width:80px;" oninput="calcFC()">
+    <button class="btn btn-outline btn-sm" onclick="this.parentElement.remove();calcFC()">✕</button>`;
+  document.getElementById('fc-ings').appendChild(div);
+}
+
+function calcFC(){
+  const costos=[...document.querySelectorAll('.ing-costo')].map(i=>parseFloat(i.value)||0);
+  const total=costos.reduce((s,c)=>s+c,0);
+  const precio=parseFloat(document.getElementById('fc-precio').value)||0;
+  const margen=precio?(((precio-total)/precio)*100).toFixed(1):0;
+  document.getElementById('fc-resumen').style.display=total>0?'block':'none';
+  document.getElementById('fc-total-cost').textContent='$'+total.toFixed(2);
+  document.getElementById('fc-margen').textContent=margen+'%';
+}
+
+async function guardarFC(){
+  const nombre=document.getElementById('fc-nombre').value.trim();
+  if(!nombre){showToast('⚠️ Escribe el nombre');return;}
+  const nombres=[...document.querySelectorAll('.ing-nombre')].map(i=>i.value.trim());
+  const costos=[...document.querySelectorAll('.ing-costo')].map(i=>parseFloat(i.value)||0);
+  const ingredientes=nombres.map((n,i)=>({nombre:n,costo:costos[i]})).filter(i=>i.nombre);
+  await addDoc(collection(db,'mg_foodcost'),{
+    nombre,cat:document.getElementById('fc-cat').value,
+    precio:parseFloat(document.getElementById('fc-precio').value)||0,
+    ingredientes,creado:serverTimestamp()
+  });
+  cerrarModal('modal-fc');
+  showToast('✅ Receta guardada');
+}
+
+// ── RECETAS ──
+function renderRecetas(){
+  let data=[...recetas];
+  if(filtroCatReceta!=='todos')data=data.filter(r=>r.cat===filtroCatReceta);
+  document.getElementById('recetas-list').innerHTML=data.length
+    ?data.map(r=>`<div class="recipe-card" onclick="window.open('${r.link}','_blank')">
+        <div><div class="recipe-name">${r.nombre}</div>
+        <div class="recipe-cat">${r.cat}${r.notas?' · '+r.notas:''}</div></div>
+        <span class="recipe-link">Ver en Notion →</span>
+      </div>`).join('')
+    :'<div class="empty"><div class="icon">📋</div><p>Agrega tu primer link de Notion.</p></div>';
+}
+
+function setFReceta(el){
+  document.querySelectorAll('#f-receta-cat .fchip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');filtroCatReceta=el.dataset.cat;renderRecetas();
+}
+
+function abrirModalReceta(){
+  ['r-nombre','r-link','r-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-receta').classList.add('open');
+}
+
+async function guardarReceta(){
+  const nombre=document.getElementById('r-nombre').value.trim();
+  const link=document.getElementById('r-link').value.trim();
+  if(!nombre||!link){showToast('⚠️ Completa nombre y link');return;}
+  await addDoc(collection(db,'mg_recetas'),{
+    nombre,cat:document.getElementById('r-cat').value,
+    link,notas:document.getElementById('r-notas').value.trim(),
+    creado:serverTimestamp()
+  });
+  cerrarModal('modal-receta');showToast('✅ Receta agregada');
+}
+
+// ── CSV ──
+function exportarCSV(tipo){
+  const data=tipo==='bajas'?bajas:producciones;
+  if(!data.length){showToast('No hay datos');return;}
+  const h=tipo==='bajas'
+    ?['Fecha','Local','Área','Producto','Cantidad','Unidad','Motivo','Encargado']
+    :['Fecha','Local','Área','Producto','Cantidad','Unidad','Turno','Responsable'];
+  const rows=data.map(r=>{
+    const f=getD(r).toLocaleString('es-EC');
+    return(tipo==='bajas'?[f,r.local,r.area,r.prod,r.cant,r.unid,r.motivo,r.enc]:[f,r.local,r.area,r.prod,r.cant,r.unid,r.turno,r.enc])
+      .map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',');
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([[h.join(','),...rows].join('\n')],{type:'text/csv;charset=utf-8;'}));
+  a.download=`${tipo}-morochos-${new Date().toISOString().slice(0,10)}.csv`;a.click();
+}
+
+// ── EXPONER ──
+window.doLogin=doLogin;window.doLogout=doLogout;window.toggleSidebar=toggleSidebar;
+window.goTo=goTo;window.renderBajas=renderBajas;window.renderProduccion=renderProduccion;
+window.renderInventario=renderInventario;window.renderScheduling=renderScheduling;
+window.renderFoodCost=renderFoodCost;window.renderRecetas=renderRecetas;
+window.abrirModalTurno=abrirModalTurno;window.guardarTurno=guardarTurno;
+window.eliminarTurno=eliminarTurno;window.abrirModalFC=abrirModalFC;
+window.addIng=addIng;window.calcFC=calcFC;window.guardarFC=guardarFC;
+window.abrirModalReceta=abrirModalReceta;window.guardarReceta=guardarReceta;
+window.cerrarModal=cerrarModal;window.exportarCSV=exportarCSV;
+window.setFReceta=setFReceta;
+</script>
+</body>
+</html>
