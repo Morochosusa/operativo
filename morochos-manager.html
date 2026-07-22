@@ -284,6 +284,15 @@
       <button class="nav-item" id="nav-scheduling" onclick="goTo('scheduling')">
         <span class="ni">👥</span><span class="nl">Scheduling</span>
       </button>
+      <button class="nav-item" id="nav-empleados" onclick="goTo('empleados')">
+        <span class="ni">🪪</span><span class="nl">Empleados</span>
+      </button>
+      <button class="nav-item" id="nav-tips" onclick="goTo('tips')">
+        <span class="ni">💵</span><span class="nl">Tips</span>
+      </button>
+      <button class="nav-item" id="nav-clock" onclick="goTo('clock')">
+        <span class="ni">⏰</span><span class="nl">Clock In/Out</span>
+      </button>
       <button class="nav-item" id="nav-foodcost" onclick="goTo('foodcost')">
         <span class="ni">💰</span><span class="nl">Food Cost</span>
       </button>
@@ -494,6 +503,93 @@
         <div id="recetas-list"></div>
       </div>
 
+
+      <!-- ═══ EMPLEADOS ═══ -->
+      <div class="page" id="page-empleados">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <p style="font-size:13px;color:var(--gray-4);">Gestiona empleados y sus códigos de acceso.</p>
+          <button class="btn btn-black btn-sm" onclick="abrirModalEmp()">+ Agregar empleado</button>
+        </div>
+        <div class="filter-bar" id="f-emp-local">
+          <button class="fchip active" data-v="todos" onclick="setFEmp(this)">Todos</button>
+          <button class="fchip" data-v="Orange" onclick="setFEmp(this)">Orange</button>
+          <button class="fchip" data-v="West Orange" onclick="setFEmp(this)">West Orange</button>
+          <button class="fchip" data-v="Facility" onclick="setFEmp(this)">Facility</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Código</th><th>Nombre</th><th>Local</th><th>Área</th><th>Estado</th><th></th></tr></thead>
+            <tbody id="emp-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ═══ TIPS ═══ -->
+      <div class="page" id="page-tips">
+        <div class="filter-bar">
+          <select id="ft-local" onchange="renderTips()">
+            <option value="todos">Todos los locales</option>
+            <option>Orange</option><option>West Orange</option><option>Facility</option>
+          </select>
+          <select id="ft-periodo" onchange="renderTips()">
+            <option value="todo">Todo</option><option value="hoy">Hoy</option>
+            <option value="semana">Esta semana</option><option value="mes">Este mes</option>
+            <option value="rango">Rango</option>
+          </select>
+          <div id="ft-rango" style="display:none;gap:6px;">
+            <input type="date" id="ft-desde" onchange="renderTips()">
+            <span style="color:var(--gray-4);">—</span>
+            <input type="date" id="ft-hasta" onchange="renderTips()">
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="exportarCSV('tips')">⬇ CSV</button>
+        </div>
+        <div class="kpi-grid" id="tips-kpis"></div>
+        <div class="card">
+          <div class="card-title">Tips por local</div>
+          <div id="tips-ranking"></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div class="card-title" style="margin:0;">Historial</div>
+            <span id="tips-count" style="font-size:12px;color:var(--gray-4);"></span>
+          </div>
+          <div id="tips-list"></div>
+        </div>
+      </div>
+
+      <!-- ═══ CLOCK IN/OUT ═══ -->
+      <div class="page" id="page-clock">
+        <div class="filter-bar">
+          <select id="fc-local" onchange="renderClock()">
+            <option value="todos">Todos los locales</option>
+            <option>Orange</option><option>West Orange</option><option>Facility</option>
+          </select>
+          <select id="fc-periodo" onchange="renderClock()">
+            <option value="todo">Todo</option><option value="hoy">Hoy</option>
+            <option value="semana">Esta semana</option><option value="mes">Este mes</option>
+            <option value="rango">Rango</option>
+          </select>
+          <div id="fc-rango" style="display:none;gap:6px;">
+            <input type="date" id="fc-desde" onchange="renderClock()">
+            <span style="color:var(--gray-4);">—</span>
+            <input type="date" id="fc-hasta" onchange="renderClock()">
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="exportarCSV('clock')">⬇ CSV</button>
+        </div>
+        <div class="kpi-grid" id="clock-kpis"></div>
+        <div class="card">
+          <div class="card-title">👥 Quién está trabajando ahora</div>
+          <div id="clock-activos"></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div class="card-title" style="margin:0;">Historial registros</div>
+            <span id="clock-count" style="font-size:12px;color:var(--gray-4);"></span>
+          </div>
+          <div id="clock-list"></div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </main>
 </div><!-- /app -->
@@ -531,6 +627,37 @@
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="cerrarModal('modal-turno')">Cancelar</button>
       <button class="btn btn-black" onclick="guardarTurno()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EMPLEADO -->
+<div class="modal-overlay" id="modal-emp">
+  <div class="modal-box">
+    <div class="modal-title">Agregar empleado</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nombre completo</label>
+        <input type="text" id="emp-nombre" class="form-control" placeholder="Nombre del empleado"/></div>
+      <div class="form-group"><label class="form-label">Código</label>
+        <input type="number" id="emp-codigo" class="form-control" placeholder="Ej: 1001"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Local</label>
+        <select id="emp-local" class="form-control">
+          <option>Orange</option><option>West Orange</option><option>Facility</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">Área</label>
+        <select id="emp-area" class="form-control">
+          <option>Cocina</option><option>Jugos</option><option>Cafetería</option><option>Bakery</option>
+        </select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Estado</label>
+      <select id="emp-estado" class="form-control">
+        <option value="activo">Activo</option><option value="inactivo">Inactivo</option>
+      </select></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="cerrarModal('modal-emp')">Cancelar</button>
+      <button class="btn btn-black" onclick="guardarEmp()">Guardar</button>
     </div>
   </div>
 </div>
@@ -616,6 +743,12 @@ function guardarReceta(){window.guardarReceta&&window.guardarReceta();}
 function cerrarModal(id){window.cerrarModal&&window.cerrarModal(id);}
 function exportarCSV(t){window.exportarCSV&&window.exportarCSV(t);}
 function setFReceta(el){window.setFReceta&&window.setFReceta(el);}
+function abrirModalEmp(){window.abrirModalEmp&&window.abrirModalEmp();}
+function guardarEmp(){window.guardarEmp&&window.guardarEmp();}
+function eliminarEmp(id){window.eliminarEmp&&window.eliminarEmp(id);}
+function setFEmp(el){window.setFEmp&&window.setFEmp(el);}
+function renderTips(){window.renderTips&&window.renderTips();}
+function renderClock(){window.renderClock&&window.renderClock();}
 </script>
 
 <script type="module">
@@ -691,7 +824,8 @@ function goTo(id){
   document.getElementById('page-'+id).classList.add('active');
   document.getElementById('nav-'+id).classList.add('active');
   const titles={dashboard:'Dashboard',bajas:'Bajas',produccion:'Producción',
-    inventario:'Inventario Bodega',scheduling:'Scheduling',foodcost:'Food Cost',recetas:'Recetas'};
+    inventario:'Inventario Bodega',scheduling:'Scheduling',foodcost:'Food Cost',recetas:'Recetas',
+    empleados:'Empleados',tips:'Tips',clock:'Clock In/Out'};
   document.getElementById('topbar-title').textContent=titles[id]||id;
   if(id==='dashboard') renderDashboard();
   if(id==='bajas') renderBajas();
@@ -700,6 +834,9 @@ function goTo(id){
   if(id==='scheduling') renderScheduling();
   if(id==='foodcost') renderFoodCost();
   if(id==='recetas') renderRecetas();
+  if(id==='empleados') renderEmpleados();
+  if(id==='tips') renderTips();
+  if(id==='clock') renderClock();
 }
 
 // ── FIRESTORE ──
@@ -735,6 +872,22 @@ function escucharFirestore(){
   onSnapshot(query(collection(db,'mg_foodcost'),orderBy('nombre')),s=>{
     foodcosts=s.docs.map(d=>({id:d.id,...d.data()}));
     if(document.getElementById('page-foodcost').classList.contains('active')) renderFoodCost();
+  });
+  let empleados=[], tips=[], clockRecords=[];
+  onSnapshot(query(collection(db,'mg_empleados'),orderBy('nombre')),s=>{
+    empleados=s.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('page-empleados').classList.contains('active')) renderEmpleados();
+    if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+  });
+  onSnapshot(query(collection(db,'tips'),orderBy('fecha','desc')),s=>{
+    tips=s.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('page-tips').classList.contains('active')) renderTips();
+    if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+  });
+  onSnapshot(query(collection(db,'clock_records'),orderBy('fecha','desc')),s=>{
+    clockRecords=s.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('page-clock').classList.contains('active')) renderClock();
+    if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
   });
   onSnapshot(query(collection(db,'mg_recetas'),orderBy('nombre')),s=>{
     recetas=s.docs.map(d=>({id:d.id,...d.data()}));
@@ -798,11 +951,7 @@ function renderDashboard(){
   const mesActual=new Date();
   const gastoMes=invEntradas.filter(e=>{const d=getD(e);return d.getMonth()===mesActual.getMonth()&&d.getFullYear()===mesActual.getFullYear();}).reduce((s,e)=>s+(e.costo||0),0);
 
-  document.getElementById('dash-kpis').innerHTML=`
-    <div class="kpi"><div class="kpi-icon">📉</div><div class="kpi-label">Bajas hoy</div><div class="kpi-value">${bajasHoy.length}</div><div class="kpi-sub">registros</div></div>
-    <div class="kpi"><div class="kpi-icon">🍳</div><div class="kpi-label">Producción hoy</div><div class="kpi-value">${prodHoy.reduce((s,p)=>s+(p.cant||0),0)}</div><div class="kpi-sub">unidades</div></div>
-    <div class="kpi"><div class="kpi-icon">🔴</div><div class="kpi-label">Stock crítico</div><div class="kpi-value" style="color:var(--red);">${criticos.length}</div><div class="kpi-sub">productos</div></div>
-    <div class="kpi"><div class="kpi-icon">💵</div><div class="kpi-label">Gasto mes</div><div class="kpi-value" style="font-size:20px;">$${gastoMes.toFixed(0)}</div><div class="kpi-sub">en compras</div></div>`;
+
 
   // Críticos
   document.getElementById('dash-criticos').innerHTML=criticos.length
@@ -822,6 +971,23 @@ function renderDashboard(){
   document.getElementById('dash-prod-hoy').innerHTML=prodHoy.length
     ?prodHoy.slice(0,5).map(p=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--gray-2);font-size:13px;"><span>${p.prod}</span><b style="color:var(--green);">${p.cant} ${p.unid}</b></div>`).join('')
     :'<div class="empty"><p>Sin producción registrada hoy.</p></div>';
+
+  // Tips hoy
+  const tipsHoy = tips.filter(t=>getD(t).toDateString()===hoy);
+  const totalTipsHoy = tipsHoy.reduce((s,t)=>s+(t.total||0),0);
+
+  // Quién está trabajando (última acción = entrada)
+  const activos = {};
+  clockRecords.filter(r=>getD(r).toDateString()===hoy).forEach(r=>{
+    if(!activos[r.nombre] || getD(r) > getD(activos[r.nombre])) activos[r.nombre] = r;
+  });
+  const trabajando = Object.values(activos).filter(r=>r.tipo==='entrada').length;
+
+  document.getElementById('dash-kpis').innerHTML=`
+    <div class="kpi"><div class="kpi-icon">📉</div><div class="kpi-label">Bajas hoy</div><div class="kpi-value">${bajasHoy.length}</div><div class="kpi-sub">registros</div></div>
+    <div class="kpi"><div class="kpi-icon">🍳</div><div class="kpi-label">Producción hoy</div><div class="kpi-value">${prodHoy.reduce((s,p)=>s+(p.cant||0),0)}</div><div class="kpi-sub">unidades</div></div>
+    <div class="kpi"><div class="kpi-icon">💵</div><div class="kpi-label">Tips hoy</div><div class="kpi-value" style="font-size:20px;">$${totalTipsHoy.toFixed(2)}</div><div class="kpi-sub">${tipsHoy.length} registros</div></div>
+    <div class="kpi"><div class="kpi-icon">👥</div><div class="kpi-label">Trabajando ahora</div><div class="kpi-value">${trabajando}</div><div class="kpi-sub">empleados activos</div></div>`;
 
   // Últimos despachos
   document.getElementById('dash-despachos').innerHTML=invDespachos.slice(0,5).length
@@ -1079,9 +1245,123 @@ async function guardarReceta(){
   cerrarModal('modal-receta');showToast('✅ Receta agregada');
 }
 
+// ── EMPLEADOS ──
+let filtroEmpLocal = 'todos';
+function setFEmp(el){
+  document.querySelectorAll('#f-emp-local .fchip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active'); filtroEmpLocal=el.dataset.v; renderEmpleados();
+}
+function renderEmpleados(){
+  let data=[...empleados];
+  if(filtroEmpLocal!=='todos') data=data.filter(e=>e.local===filtroEmpLocal);
+  document.getElementById('emp-body').innerHTML=data.length
+    ?data.map(e=>`<tr>
+        <td><b>${e.codigo}</b></td><td>${e.nombre}</td><td>${e.local}</td><td>${e.area}</td>
+        <td><span class="badge ${e.estado==='activo'?'badge-green':'badge-gray'}">${e.estado||'activo'}</span></td>
+        <td><button class="btn btn-outline btn-sm" style="color:var(--red);" onclick="eliminarEmp('${e.id}')">✕</button></td>
+      </tr>`).join('')
+    :'<tr><td colspan="6"><div class="empty"><p>Sin empleados registrados.</p></div></td></tr>';
+}
+function abrirModalEmp(){
+  ['emp-nombre','emp-codigo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-emp').classList.add('open');
+}
+async function guardarEmp(){
+  const nombre=document.getElementById('emp-nombre').value.trim();
+  const codigo=document.getElementById('emp-codigo').value.trim();
+  if(!nombre||!codigo){showToast('⚠️ Completa nombre y código');return;}
+  const existe=empleados.find(e=>e.codigo===codigo&&e.local===document.getElementById('emp-local').value);
+  if(existe){showToast('⚠️ Ya existe un empleado con ese código en este local');return;}
+  await addDoc(collection(db,'mg_empleados'),{
+    nombre,codigo,local:document.getElementById('emp-local').value,
+    area:document.getElementById('emp-area').value,
+    estado:document.getElementById('emp-estado').value,
+    creado:serverTimestamp()
+  });
+  cerrarModal('modal-emp');showToast('✅ Empleado agregado');
+}
+async function eliminarEmp(id){
+  if(!confirm('¿Eliminar este empleado?'))return;
+  await deleteDoc(doc(db,'mg_empleados',id));showToast('Empleado eliminado');
+}
+
+// ── TIPS ──
+function renderTips(){
+  const p=document.getElementById('ft-periodo').value;
+  document.getElementById('ft-rango').style.display=p==='rango'?'flex':'none';
+  let data=[...tips];
+  const loc=document.getElementById('ft-local').value;
+  if(loc!=='todos')data=data.filter(t=>t.local===loc);
+  data=filtrarFecha(data,'ft-periodo','ft-desde','ft-hasta');
+  const total=data.reduce((s,t)=>s+(t.total||0),0);
+  const hoy=new Date().toDateString();
+  const hoyTotal=data.filter(t=>getD(t).toDateString()===hoy).reduce((s,t)=>s+(t.total||0),0);
+  document.getElementById('tips-kpis').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Total período</div><div class="kpi-value" style="font-size:20px;">$${total.toFixed(2)}</div></div>
+    <div class="kpi"><div class="kpi-label">Hoy</div><div class="kpi-value" style="font-size:20px;">$${hoyTotal.toFixed(2)}</div></div>
+    <div class="kpi"><div class="kpi-label">Registros</div><div class="kpi-value">${data.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Promedio por turno</div><div class="kpi-value" style="font-size:18px;">$${data.length?(total/data.length).toFixed(2):'0.00'}</div></div>`;
+  // Por local ranking
+  const porLocal={};data.forEach(t=>{porLocal[t.local]=(porLocal[t.local]||0)+(t.total||0);});
+  const sorted=Object.entries(porLocal).sort((a,b)=>b[1]-a[1]);
+  const mx=sorted[0]?.[1]||1;
+  document.getElementById('tips-ranking').innerHTML=sorted.length
+    ?sorted.map(([l,v])=>`<div class="rank-bar"><div class="rank-label">${l}<span>$${v.toFixed(2)}</span></div>
+      <div class="rank-track"><div class="rank-fill" style="width:${(v/mx*100).toFixed(0)}%;background:var(--green);"></div></div></div>`).join('')
+    :'<div class="empty"><p>Sin datos.</p></div>';
+  document.getElementById('tips-count').textContent=data.length+' registros';
+  document.getElementById('tips-list').innerHTML=data.length
+    ?data.map(t=>{
+      const f=getD(t).toLocaleDateString('es-EC',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+      return `<div class="hist-item">
+        <div><div class="hist-name">${t.local}</div>
+        <div class="hist-meta">${f} · ${t.enc}</div>
+        <div class="hist-tags"><span class="badge badge-amber">${t.turno}</span></div></div>
+        <div class="hist-right"><div class="hist-qty" style="color:var(--green);">$${(t.total||0).toFixed(2)}</div></div>
+      </div>`;}).join('')
+    :'<div class="empty"><div class="icon">💵</div><p>Sin registros.</p></div>';
+}
+
+// ── CLOCK IN/OUT ──
+function renderClock(){
+  const p=document.getElementById('fc-periodo').value;
+  document.getElementById('fc-rango').style.display=p==='rango'?'flex':'none';
+  let data=[...clockRecords];
+  const loc=document.getElementById('fc-local').value;
+  if(loc!=='todos')data=data.filter(r=>r.local===loc);
+  data=filtrarFecha(data,'fc-periodo','fc-desde','fc-hasta');
+  const hoy=new Date().toDateString();
+  const hoyData=clockRecords.filter(r=>getD(r).toDateString()===hoy);
+  // Quién está activo ahora
+  const activos={};
+  hoyData.forEach(r=>{if(!activos[r.nombre]||getD(r)>getD(activos[r.nombre]))activos[r.nombre]=r;});
+  const trabajando=Object.values(activos).filter(r=>r.tipo==='entrada');
+  document.getElementById('clock-kpis').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Registros hoy</div><div class="kpi-value">${hoyData.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Trabajando ahora</div><div class="kpi-value" style="color:var(--green);">${trabajando.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Empleados únicos hoy</div><div class="kpi-value">${new Set(hoyData.map(r=>r.nombre)).size}</div></div>
+    <div class="kpi"><div class="kpi-label">Total período</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">registros</div></div>`;
+  document.getElementById('clock-activos').innerHTML=trabajando.length
+    ?trabajando.map(r=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--gray-2);">
+        <div><b style="font-size:13px;">${r.nombre}</b><div style="font-size:11px;color:var(--gray-4);">${r.area} · ${r.local}</div></div>
+        <span class="badge badge-green">Trabajando</span></div>`).join('')
+    :'<div class="empty"><p>Nadie ha marcado entrada hoy.</p></div>';
+  document.getElementById('clock-count').textContent=data.length+' registros';
+  document.getElementById('clock-list').innerHTML=data.length
+    ?data.map(r=>{
+      const f=getD(r).toLocaleDateString('es-EC',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+      return `<div class="hist-item">
+        <div><div class="hist-name">${r.nombre}</div>
+        <div class="hist-meta">${f}</div>
+        <div class="hist-tags"><span class="badge badge-gray">${r.local}</span><span class="badge badge-blue">${r.area}</span></div></div>
+        <div class="hist-right"><span class="badge ${r.tipo==='entrada'?'badge-green':'badge-red'}">${r.tipo==='entrada'?'✅ Entrada':'🚪 Salida'}</span></div>
+      </div>`;}).join('')
+    :'<div class="empty"><div class="icon">⏰</div><p>Sin registros.</p></div>';
+}
+
 // ── CSV ──
 function exportarCSV(tipo){
-  const data=tipo==='bajas'?bajas:producciones;
+  const data=tipo==='bajas'?bajas:tipo==='prod'?producciones:tipo==='tips'?tips:clockRecords;
   if(!data.length){showToast('No hay datos');return;}
   const h=tipo==='bajas'
     ?['Fecha','Local','Área','Producto','Cantidad','Unidad','Motivo','Encargado']
@@ -1107,6 +1387,9 @@ window.addIng=addIng;window.calcFC=calcFC;window.guardarFC=guardarFC;
 window.abrirModalReceta=abrirModalReceta;window.guardarReceta=guardarReceta;
 window.cerrarModal=cerrarModal;window.exportarCSV=exportarCSV;
 window.setFReceta=setFReceta;
+window.abrirModalEmp=abrirModalEmp;window.guardarEmp=guardarEmp;window.eliminarEmp=eliminarEmp;
+window.setFEmp=setFEmp;window.renderEmpleados=renderEmpleados;
+window.renderTips=renderTips;window.renderClock=renderClock;
 </script>
 </body>
 </html>
